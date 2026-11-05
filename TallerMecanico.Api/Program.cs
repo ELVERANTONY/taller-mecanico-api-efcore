@@ -46,7 +46,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("Front");
 app.UseAuthorization();
-app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();
