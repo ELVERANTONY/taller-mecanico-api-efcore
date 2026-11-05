@@ -1,0 +1,20 @@
+## Ignorar artefactos de compilación
+bin/
+obj/
+.vs/
+.vscode/
+
+## Secretos y configuración local
+appsettings.Production.json
+*.user
+.env
+
+## Publicación
+publish/
+publish-output/
+
+## macOS
+.DS_Store
+
+## Evidencias locales (no subir)
+capturas/

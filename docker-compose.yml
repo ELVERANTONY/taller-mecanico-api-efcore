@@ -1,0 +1,25 @@
+# MySQL local para desarrollo (mismo motor que la nube en MonsterASP.NET)
+#   docker compose up -d      -> crea la base y carga db/TallerDB.sql la primera vez
+#   docker compose down -v    -> elimina el contenedor y los datos
+name: taller-mecanico
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: taller-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "Root123!"
+      MYSQL_DATABASE: "TallerDB"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pRoot123!"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql-data:

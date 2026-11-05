@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pruebas - Taller Mecánico API</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #f4f6f8; color: #1f2933; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 18px; color: #5b6b7a; font-size: 13px; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  button { background: #0b6bcb; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: default; }
+  #resumen { font-size: 13px; font-weight: 600; }
+  .tabla { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; background: #e9eef3; padding: 9px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #52606d; }
+  td { padding: 8px 10px; border-top: 1px solid #eef1f4; vertical-align: top; }
+  td.met { font-weight: 700; width: 60px; }
+  td.url { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #334e68; }
+  .badge { display: inline-block; min-width: 44px; text-align: center; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11.5px; color: #fff; }
+  .s2 { background: #2f9e44; } .s4 { background: #d9480f; } .s5 { background: #c92a2a; } .s0 { background: #868e96; }
+  .detalle { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #616e7c; word-break: break-word; max-width: 520px; }
+  .ok { color: #2b8a3e; }
+  .mal { color: #c92a2a; }
+</style>
+</head>
+<body>
+<h1>Pruebas sobre la API publicada</h1>
+<p class="sub" id="origen"></p>
+<div class="bar">
+  <button id="btn">Ejecutar pruebas</button>
+  <span id="resumen">Pendiente…</span>
+</div>
+<div class="tabla">
+  <table>
+    <thead>
+      <tr><th>Método</th><th>Ruta</th><th>Esperado</th><th>Obtenido</th><th>Detalle</th></tr>
+    </thead>
+    <tbody id="filas"></tbody>
+  </table>
+</div>
+
+<script>
+const base = location.origin;
+document.getElementById("origen").textContent = "API: " + base + "  ·  base de datos MySQL en MonsterASP.NET";
+
+const casos = [];
+const add = (metodo, ruta, esperado, fn) => casos.push({ metodo, ruta, esperado, fn });
+const json = (body) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+let clienteId, vehiculoId;
+const sufijo = Date.now().toString().slice(-6);
+const doc = "9" + sufijo + "0";
+const placa = "T" + sufijo;
+
+// 200
+add("GET", "/api/clientes", 200, () => fetch(base + "/api/clientes"));
+add("GET", "/api/clientes/1", 200, () => fetch(base + "/api/clientes/1"));
+add("GET", "/api/clientes/1/vehiculos", 200, () => fetch(base + "/api/clientes/1/vehiculos"));
+add("GET", "/api/vehiculos?clienteId=1&marca=Toyota", 200, () => fetch(base + "/api/vehiculos?clienteId=1&marca=Toyota"));
+// 201
+add("POST", "/api/clientes", 201, async () => {
+  const r = await fetch(base + "/api/clientes", json({
+    documento: doc, nombre: "Prueba", apellido: "Automática",
+    telefono: "999111222", email: `prueba${sufijo}@correo.com`
+  }));
+  if (r.ok) clienteId = (await r.clone().json()).clienteId;
+  return r;
+});
+add("POST", "/api/vehiculos", 201, async () => {
+  const r = await fetch(base + "/api/vehiculos", json({
+    clienteId: clienteId, placa: placa, marca: "Toyota", modelo: "Yaris",
+    anio: 2023, color: "Rojo", kilometraje: 15000
+  }));
+  if (r.ok) vehiculoId = (await r.clone().json()).vehiculoId;
+  return r;
+});
+// 204
+add("PUT", "/api/vehiculos/{id}", 204, () => fetch(base + `/api/vehiculos/${vehiculoId}`, {
+  method: "PUT", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ vehiculoId, clienteId, placa: placa, marca: "Toyota", modelo: "Yaris", anio: 2023, color: "Azul", kilometraje: 16000 })
+}));
+add("PUT", "/api/clientes/{id}", 204, () => fetch(base + `/api/clientes/${clienteId}`, {
+  method: "PUT", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ clienteId, documento: doc, nombre: "Prueba", apellido: "Actualizada", telefono: "999333444", email: `prueba${sufijo}@correo.com`, activo: true })
+}));
+add("DELETE", "/api/vehiculos/{id}", 204, () => fetch(base + `/api/vehiculos/${vehiculoId}`, { method: "DELETE" }));
+add("DELETE", "/api/clientes/{id}", 204, () => fetch(base + `/api/clientes/${clienteId}`, { method: "DELETE" }));
+// 400
+add("POST", "/api/clientes (inválido)", 400, () => fetch(base + "/api/clientes", json({ documento: "12", nombre: "" })));
+add("PUT", "/api/clientes/1 (id distinto)", 400, () => fetch(base + "/api/clientes/1", {
+  method: "PUT", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ clienteId: 99, documento: "12345678", nombre: "Carlos", apellido: "Ramírez" })
+}));
+add("POST", "/api/vehiculos (cliente inexistente)", 400, () => fetch(base + "/api/vehiculos", json({ clienteId: 9999, placa: "QQQ-111", marca: "Kia", modelo: "Sportage", anio: 2022 })));
+// 404
+add("GET", "/api/clientes/9999", 404, () => fetch(base + "/api/clientes/9999"));
+add("GET", "/api/vehiculos/9999", 404, () => fetch(base + "/api/vehiculos/9999"));
+add("DELETE", "/api/vehiculos/9999", 404, () => fetch(base + "/api/vehiculos/9999", { method: "DELETE" }));
+// 409
+add("POST", "/api/clientes (documento repetido)", 409, () => fetch(base + "/api/clientes", json({ documento: "12345678", nombre: "Otro", apellido: "Cliente" })));
+add("POST", "/api/vehiculos (placa repetida)", 409, () => fetch(base + "/api/vehiculos", json({ clienteId: 2, placa: "ABC-123", marca: "Toyota", modelo: "Corolla", anio: 2020 })));
+add("DELETE", "/api/clientes/1 (con vehículos)", 409, () => fetch(base + "/api/clientes/1", { method: "DELETE" }));
+
+const tbody = document.getElementById("filas");
+const badge = (c) => `<span class="badge ${c >= 500 ? "s5" : c >= 400 ? "s4" : "s2"}">${c || "ERR"}</span>`;
+
+document.getElementById("btn").addEventListener("click", async () => {
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  tbody.innerHTML = "";
+  let ok = 0;
+
+  for (const c of casos) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="met">${c.metodo}</td><td class="url">${c.ruta}</td><td>${c.esperado}</td><td>—</td><td class="detalle">ejecutando…</td>`;
+    tbody.appendChild(tr);
+
+    let estado = 0, detalle = "";
+    try {
+      const r = await c.fn();
+      estado = r.status;
+      const texto = await r.text();
+      detalle = texto.length > 220 ? texto.slice(0, 220) + "…" : texto;
+    } catch (e) { detalle = String(e); }
+
+    const bien = estado === c.esperado;
+    if (bien) ok++;
+    tr.children[3].innerHTML = badge(estado);
+    tr.children[4].innerHTML = `<span class="${bien ? "ok" : "mal"}">${bien ? "✓" : "✗"}</span> ${detalle.replace(/</g, "&lt;")}`;
+  }
+
+  document.getElementById("resumen").innerHTML = `${ok}/${casos.length} casos correctos`;
+  btn.disabled = false;
+});
+
+// Permite abrir la página lista para captura: /pruebas.html?auto=1
+if (new URLSearchParams(location.search).has("auto")) {
+  document.getElementById("btn").click();
+}
+</script>
+</body>
+</html>

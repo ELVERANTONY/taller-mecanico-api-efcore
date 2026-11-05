@@ -1,0 +1,153 @@
+@host = http://localhost:5149
+@clienteId = 1
+@vehiculoId = 1
+
+### GET clientes con filtro (200)
+GET {{host}}/api/clientes?buscar=carlos&activo=true
+
+### GET cliente por id (200)
+GET {{host}}/api/clientes/{{clienteId}}
+
+### GET ruta anidada cliente -> vehiculos (200)
+GET {{host}}/api/clientes/{{clienteId}}/vehiculos
+
+### GET cliente inexistente (404)
+GET {{host}}/api/clientes/9999
+
+### POST cliente valido (201)
+POST {{host}}/api/clientes
+Content-Type: application/json
+
+{
+  "documento": "87654321",
+  "nombre": "Ana",
+  "apellido": "Rojas",
+  "telefono": "999888777",
+  "email": "ana.rojas@correo.com",
+  "direccion": "Av. Siempre Viva 742"
+}
+
+### POST cliente con documento repetido (409)
+POST {{host}}/api/clientes
+Content-Type: application/json
+
+{
+  "documento": "12345678",
+  "nombre": "Otro",
+  "apellido": "Cliente"
+}
+
+### POST cliente invalido (400) - documento muy corto y sin nombre
+POST {{host}}/api/clientes
+Content-Type: application/json
+
+{
+  "documento": "12",
+  "nombre": ""
+}
+
+### PUT cliente (204)
+PUT {{host}}/api/clientes/{{clienteId}}
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "documento": "12345678",
+  "nombre": "Carlos",
+  "apellido": "Ramírez",
+  "telefono": "987111222",
+  "email": "carlos.ramirez@correo.com",
+  "direccion": "Av. Los Álamos 120, Lima",
+  "activo": true
+}
+
+### PUT id de ruta distinto al del cuerpo (400)
+PUT {{host}}/api/clientes/{{clienteId}}
+Content-Type: application/json
+
+{
+  "clienteId": 99,
+  "documento": "12345678",
+  "nombre": "Carlos",
+  "apellido": "Ramírez"
+}
+
+### DELETE cliente con vehiculos (409)
+DELETE {{host}}/api/clientes/{{clienteId}}
+
+### GET vehiculos con filtros (200)
+GET {{host}}/api/vehiculos?clienteId=1&marca=Toyota
+
+### GET vehiculo por id (200)
+GET {{host}}/api/vehiculos/{{vehiculoId}}
+
+### POST vehiculo valido (201)
+POST {{host}}/api/vehiculos
+Content-Type: application/json
+
+{
+  "clienteId": 2,
+  "placa": "ZZZ-999",
+  "marca": "Toyota",
+  "modelo": "Hilux",
+  "anio": 2024,
+  "color": "Negro",
+  "kilometraje": 1200
+}
+
+### POST vehiculo con placa repetida (409)
+POST {{host}}/api/vehiculos
+Content-Type: application/json
+
+{
+  "clienteId": 2,
+  "placa": "ABC-123",
+  "marca": "Toyota",
+  "modelo": "Corolla",
+  "anio": 2020
+}
+
+### POST vehiculo con cliente inexistente (400)
+POST {{host}}/api/vehiculos
+Content-Type: application/json
+
+{
+  "clienteId": 9999,
+  "placa": "QQQ-111",
+  "marca": "Kia",
+  "modelo": "Sportage",
+  "anio": 2022
+}
+
+### POST vehiculo invalido (400) - anio fuera de rango y placa con minusculas
+POST {{host}}/api/vehiculos
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "placa": "abc",
+  "marca": "Kia",
+  "modelo": "Rio",
+  "anio": 1800
+}
+
+### PUT vehiculo (204)
+PUT {{host}}/api/vehiculos/{{vehiculoId}}
+Content-Type: application/json
+
+{
+  "vehiculoId": 1,
+  "clienteId": 1,
+  "placa": "ABC-123",
+  "marca": "Toyota",
+  "modelo": "Corolla",
+  "anio": 2019,
+  "color": "Blanco",
+  "kilometraje": 86000
+}
+
+### DELETE vehiculo (204)
+DELETE {{host}}/api/vehiculos/{{vehiculoId}}
+
+### DELETE vehiculo inexistente (404)
+DELETE {{host}}/api/vehiculos/9999
